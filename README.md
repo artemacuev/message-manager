@@ -3,4 +3,5 @@ The project contains 2 scripts that are used by the rabbitmq message broker with
 
 # Install introdaction:
 1.``` docker-compose up```
+
 2. In Grafana import dashboard/dashboard.json file.

@@ -1,4 +1,13 @@
-// Step 1: Create Connection
+/*
+Программа extension-workre.js, принимающая данные из очереди "extension", обрабатывающая их
+и записывающая их в базу данных
+Используемые функции:
+cheak - функция для проверки соединения с базой данных
+createMessage - функция обрабатыващая принятый объект из очереди и записывающая данные из нее в базу данных
+Используемые переменные:
+QUEUE - содержит в себе строку зачения очереди;
+message - объект, содержащий в себе данные принятые и расшифрованные из очереди.
+*/
 const amqp = require("amqplib/callback_api");
 const chalk = require("chalk");
 const db = require("../db");
@@ -6,14 +15,14 @@ const ExtensionModel = require("../models/extension-model");
 
 const cheak = async() => {
     try {
-        await db.authenticate();
+        await db.authenticate();    // Подключение к базе данных и отправка тестового запроса
         console.log("Connection has been established successfully.");
     } catch (error) {
         console.error("Unable to connect to the database:", error);
     }
 };
 
-cheak();
+cheak(); // Функция для проверки подключения к базе данных
 
 const createMessage = async(message) => {
     const {
@@ -27,7 +36,8 @@ const createMessage = async(message) => {
         device_version,
     } = message;
     db.sync().then(function() {
-        var extensionModel = ExtensionModel.build({
+        try {
+            var extensionModel = ExtensionModel.build({
             dmac: dmac,
             sPT: spt,
             request_URL: request_url,
@@ -38,29 +48,34 @@ const createMessage = async(message) => {
             Device_version: device_version,
         });
         extensionModel.save();
+        } catch (e) {
+            console.log("Ошибка с записью данных в таблицу")
+        }
     });
 };
 
-amqp.connect("amqp://localhost", (connError, connection) => {
+amqp.connect("amqp://localhost", (connError, connection) => {   // Подключение брокеру сообщений
     if (connError) {
         throw connError;
     }
-    // Step 2: Create Channel
-    connection.createChannel((channelError, channel) => {
+
+    connection.createChannel((channelError, channel) => {  // Подключение к каналу связи
         if (channelError) {
             throw channelError;
         }
-        // Step 3: Assert Queue
-        const QUEUE = "extension";
+
+        const QUEUE = "extension";  // Подтверждение очереди
         channel.assertQueue(QUEUE);
-        // Step 4: Receive Messages
-        channel.consume(
+
+        channel.consume(       // Получение сообщений
             QUEUE,
             (msg) => {
                 console.log(chalk.white.bgYellow.bold("Extension received:----------"));
-                const message = JSON.parse(msg.content.toString());
-                createMessage(message);
+                const message = JSON.parse(msg.content.toString());         // Обработка сообщений
+                createMessage(message); // Запись сообщений в базу данных
+                console.log("Данные успешно записаны в таблицу \"extension\"");
                 console.log(chalk.white.bgYellow.bold("---------------------------"));
+                console.log(`Было получено сообщение из очереди ${QUEUE}:`);
                 console.dir(message);
                 console.log(chalk.white.bgYellow.bold("---------------------------"));
             }, {

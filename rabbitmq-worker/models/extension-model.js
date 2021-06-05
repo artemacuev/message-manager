@@ -1,6 +1,8 @@
 const sequelize = require('../db');
 const {DataTypes} = require('sequelize');
 
+// Представление таблиц как объектов, их дальнейшая инициализация и создание таковых, если они отсутствуют в базе данных
+
 const extension = sequelize.define('extension', {
     id:{type: DataTypes.INTEGER, primaryKey: true, unique: true, autoIncrement: true},
     dmac:{type: DataTypes.STRING},
@@ -16,3 +18,15 @@ const extension = sequelize.define('extension', {
 })
 
 module.exports = extension;
+
+// create TABLE extension(
+//     id SERIAL PRIMARY KEY,
+//     dmac VARCHAR(255),
+//     sPT VARCHAR(255),
+//     request_URL VARCHAR(255),
+//     file_path VARCHAR(255),
+//     end_ VARCHAR(255),
+//     msg_ VARCHAR(255),
+//     type_ VARCHAR(255),
+//     Device_version VARCHAR(255),
+// );
